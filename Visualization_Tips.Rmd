@@ -1,0 +1,145 @@
+---
+title: "Basics of Statistical Visualization with ggplot2"
+author: "Alvaro Fuentes"
+date: "2016"
+output: html_document
+---
+
+# Introduction
+
+```{r, echo=FALSE, warning=FALSE}
+library(ggplot2)
+theme_set(theme_bw())
+
+# Loading the data
+path_to_data <- 'https://raw.githubusercontent.com/quantcompany/Springboard_FDS/master/titanic_original.csv'
+titanic <- read.csv(path_to_data, stringsAsFactors = FALSE, na.strings = '')
+
+```
+
+
+#Univariate Plots: Quantitative Variables
+
+## Histograms
+
+Histograms are plots used to explore how quantitative variables are distributed. It is an estimate of the probability distribution of a continuous variable (quantitative variable). To construct a histogram, the first step is to "bin" the range of values—that is, divide the entire range of values into a series of intervals—and then count how many values fall into each interval. The bins are usually specified as consecutive, non-overlapping intervals of a variable. The bins (intervals) must be adjacent, and are usually equal size.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(titanic, aes(x=age)) +
+    geom_histogram(color = 'black', fill='#DDDDDD', binwidth = 2) +
+    ggtitle('Distribution of Ages in the Titanic')
+
+
+ggplot(titanic, aes(x=age, fill=survived2)) +
+    geom_histogram(color = 'black', binwidth = 2) +
+    ggtitle('Distribution of Ages in the Titanic')
+
+
+ggplot(titanic, aes(x = age)) +
+    geom_histogram(color = 'black', fill = 'lightblue') +
+    geom_text(stat = 'bin', vjust=-0.25, 
+              aes(y = ..count.., label = ..count..)) +
+    ggtitle('Distribution of Ages in the Titanic')
+```
+
+## Density Plots
+
+density plots are usually a much more effective way to view the distribution of a variable
+
+```{r, echo=FALSE, warning=FALSE}
+ggplot(titanic, aes(x = age)) +
+    geom_density(color = 'black', fill = 'lightblue', alpha = 0.95) +
+    ggtitle('Distribution of Ages in the Titanic')
+```
+
+## Histogams and Density Plots
+
+We can have them both, why not?
+All we need to do is add both layers to the plot, however we need to add `y = ..density..` in the `aes` function so the height of the bars are not the counts but the density: estimation of the probability of the variable taking the values in the x axis.
+
+```{r, echo=FALSE, warning=FALSE}
+ggplot(titanic, aes(x = age, y = ..density..)) + 
+    geom_histogram(color = 'black', fill = 'lightblue')  + 
+    geom_density(color = 'black', fill = 'lightblue', alpha = 0.4) +
+    ggtitle('Distribution of Ages in the Titanic')
+```
+
+#Univariate Plots: Qualitative Variables
+
+## Bar charts
+
+
+```{r, echo=FALSE, warning=FALSE}
+titanic$sex <- factor(titanic$sex)
+
+ggplot(titanic[!is.na(titanic$sex),], aes(x = sex)) +
+    geom_bar() +
+    geom_text(stat = 'count', aes(y = (..count.. + 30), label = ..count..)) +
+    ggtitle('Genders of Titanic Passangers')
+
+```
+
+## Proportions
+
+Don't use pie charts. 
+```{r, warning=FALSE}
+
+ggplot(titanic[!is.na(titanic$sex),], aes(x = 'gender', fill = sex)) +
+    geom_bar(position = 'fill') + xlab('') + ylab('') +
+    geom_text(stat = 'count',
+              position = 'fill',
+              hjust = c(2.2,4), size = 5,
+              aes(ymax = ..count..,
+                  label = paste0(round(100*..count../sum(..count..),1),'%'))
+              ) + 
+    coord_flip()
+
+```
+
+# Bivariate plots: Quantitative vs. Quantitative
+
+```{r, echo=FALSE, warning=FALSE}
+
+ggplot(titanic, aes(x = age, y = fare)) +
+    geom_point()
+
+```
+
+# Bivariate plots: Qualitative vs. Qualitative
+
+```{r, echo=FALSE, warning=FALSE}
+titanic$survived2 <- factor(titanic$survived, levels = c(0,1), labels = c('No','Yes'))
+
+ggplot(titanic[!is.na(titanic$survived2),], aes(x = survived2, fill = sex)) +
+    geom_bar(position = 'stack') +
+    geom_text(stat = 'count', position = 'stack', vjust = -0.25,
+              aes(y = ..count.., label = ..count..))
+
+ggplot(titanic[!is.na(titanic$survived2),], aes(x = survived2, fill = sex)) +
+    geom_bar(position = 'dodge') +
+    geom_text(stat = 'count',  vjust = -0.25, 
+              position = position_dodge(width = 1),
+              aes(y = ..count.., label = ..count..))
+
+ggplot(titanic[!is.na(titanic$survived2),], 
+            aes(x = survived2, fill = sex)) +
+    geom_bar(position = 'fill') + xlab('Survived') + ylab('') +
+    annotate('text', x = c(1,2,1,2), y = c(0.08,0.4,0.5,0.8), size = 5,
+             label = c('15.7%','68.7%','84.3%','32.2%')) + 
+    coord_flip()
+```
+
+
+# Bivariate plots: Quantitative vs. Qualitative
+
+```{r, echo=FALSE, warning=FALSE}
+
+ggplot(titanic[!is.na(titanic$survived2),], 
+       aes(x = factor(pclass), y = age)) +
+    geom_boxplot()
+
+ggplot(titanic[!is.na(titanic$survived2),], 
+       aes(x = age, fill = factor(pclass))) +
+    geom_density(alpha = 0.4)
+
+```
